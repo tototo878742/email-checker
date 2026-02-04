@@ -50,43 +50,87 @@ Google Gemini (AI) を活用し、メール本文のリスクスコア判定、�
 ### クラス図 (Class Diagram)
 ```mermaid
 classDiagram
+    %% クラスの定義
     class EmailController {
         <<Controller>>
         +index(Model) String
         +analyze(String, Model) String
     }
+
     class GeminiService {
         <<Service>>
+        -String apiKey
+        -String GEMINI_URL
         +analyzeEmail(String text) DiagnosisLog
-    }
-    class DiagnosisLogRepository {
-        <<Interface>>
-        +save(DiagnosisLog)
-    }
-    class DiagnosisLog {
-        <<Entity>>
-        -Integer score
-        -String reason
+        -callGeminiApi(String prompt) String
     }
 
-    EmailController ..> GeminiService : Uses
-    GeminiService ..> DiagnosisLogRepository : Uses
-    DiagnosisLogRepository ..> DiagnosisLog : Manages
+    class DiagnosisLogRepository {
+        <<Interface>>
+        +findAll() List~DiagnosisLog~
+        +save(DiagnosisLog) DiagnosisLog
+    }
+
+    class DiagnosisLog {
+        <<Entity>>
+        -Long id
+        -String originalText
+        -Integer score
+        -String reason
+        -LocalDateTime createdAt
+    }
+
+    %% 関係性の定義
+    EmailController ..> GeminiService : 使用 (Uses)
+    EmailController ..> DiagnosisLogRepository : 履歴取得 (Uses)
+    GeminiService ..> DiagnosisLogRepository : 保存 (Uses)
+    DiagnosisLogRepository ..> DiagnosisLog : 管理 (Manages)
 ```
 
 ### シーケンス図 (Sequence Diagram)
 ```mermaid
 sequenceDiagram
-    actor User
-    participant Ctrl as Controller
-    participant Svc as Service
-    participant API as Gemini API
-    participant DB as Database
+    autonumber
+    actor User as ユーザー
+    participant View as ブラウザ(HTML)
+    participant Ctrl as EmailController
+    participant Svc as GeminiService
+    participant API as Google Gemini API
+    participant DB as Neon DB (PostgreSQL)
 
-    User->>Ctrl: 診断リクエスト
-    Ctrl->>Svc: 解析処理
-    Svc->>API: 問い合わせ
-    API-->>Svc: JSON回答
-    Svc->>DB: 結果を保存
-    Ctrl-->>User: 結果表示
+    %% 診断フロー開始
+    User->>View: メール本文を入力して「診断」クリック
+    View->>Ctrl: POST /analyze (本文送信)
+    
+    activate Ctrl
+    Ctrl->>Svc: analyzeEmail(本文)
+    
+    activate Svc
+    Note right of Svc: プロンプトの作成<br>(役割付与+JSON形式指定)
+    
+    Svc->>API: HTTP Request (POST)
+    activate API
+    API-->>Svc: JSON Response (スコア, 理由, 危険語句)
+    deactivate API
+    
+    Note right of Svc: JSONの解析(パース)と<br>Entityオブジェクトの作成
+    
+    Svc->>DB: save(診断ログ)
+    activate DB
+    DB-->>Svc: 保存完了
+    deactivate DB
+    
+    Svc-->>Ctrl: 診断結果(Entity)を返す
+    deactivate Svc
+
+    %% 履歴の再取得
+    Ctrl->>DB: findAll() (過去の履歴取得)
+    activate DB
+    DB-->>Ctrl: 履歴リスト
+    deactivate DB
+
+    Ctrl-->>View: 結果画面を表示 (Thymeleaf)
+    deactivate Ctrl
+    
+    View-->>User: スコアと解説を表示<br>(自動スクロール)
 ```
