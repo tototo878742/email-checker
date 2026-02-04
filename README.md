@@ -44,3 +44,49 @@ Google Gemini (AI) を活用し、メール本文のリスクスコア判定、�
 ## 👨‍💻 工夫した点
 - **ハイブリッドな開発環境:** ローカルでは軽量なH2、本番では堅牢なNeon(PostgreSQL)と、環境に応じてDBを自動で切り替える構成にしました。
 - **UX/UI:** 診断待ちのストレスを減らすローディング表示や、直感的なメーター表示など、ユーザー体験を重視しました。
+
+## 📐 設計図 (Architecture)
+
+### クラス図 (Class Diagram)
+```mermaid
+classDiagram
+    class EmailController {
+        <<Controller>>
+        +index(Model) String
+        +analyze(String, Model) String
+    }
+    class GeminiService {
+        <<Service>>
+        +analyzeEmail(String text) DiagnosisLog
+    }
+    class DiagnosisLogRepository {
+        <<Interface>>
+        +save(DiagnosisLog)
+    }
+    class DiagnosisLog {
+        <<Entity>>
+        -Integer score
+        -String reason
+    }
+
+    EmailController ..> GeminiService : Uses
+    GeminiService ..> DiagnosisLogRepository : Uses
+    DiagnosisLogRepository ..> DiagnosisLog : Manages
+```
+
+### シーケンス図 (Sequence Diagram)
+```mermaid
+sequenceDiagram
+    actor User
+    participant Ctrl as Controller
+    participant Svc as Service
+    participant API as Gemini API
+    participant DB as Database
+
+    User->>Ctrl: 診断リクエスト
+    Ctrl->>Svc: 解析処理
+    Svc->>API: 問い合わせ
+    API-->>Svc: JSON回答
+    Svc->>DB: 結果を保存
+    Ctrl-->>User: 結果表示
+```
