@@ -201,7 +201,7 @@
 			</form>
 		</div>
 
-		<div th:if="${score != null}" class="custom-card animate__animated animate__fadeInUp">
+		<div th:if="${score != null}" id="result-section" class="custom-card animate__animated animate__fadeInUp">
 			<div class="p-4 border-bottom bg-light">
 				<div class="row align-items-center">
 					<div class="col-md-6">
@@ -263,25 +263,25 @@
 		</div>
 	</div>
 
-	<div th:if="${score != null}" id="result-section" class="custom-card animate__animated animate__fadeInUp">
-	</div>
+
 
 	<script th:inline="javascript">
 		/*<![CDATA[*/
 
-		// ① ページ読み込み時の自動スクロール処理
-		document.addEventListener("DOMContentLoaded", function () {
-			const resultSection = document.getElementById('result-section');
-			if (resultSection) {
-				setTimeout(() => {
-					resultSection.scrollIntoView({
-						behavior: 'smooth',
-						block: 'start'  // ★ここを 'center' から 'start' に変更
-					});
-				}, 500);
-			}
-		});
+		// ① ページ読み込み時の自動スクロール処理（シンプル版）
+				document.addEventListener("DOMContentLoaded", function() {
+					const resultSection = document.getElementById('result-section');
 
+					if (resultSection) {
+						// 少し待ってから実行（画面描画を確実にするため）
+						setTimeout(() => {
+							resultSection.scrollIntoView({
+								behavior: 'smooth',
+								block: 'start' // 要素の「頭」に合わせる
+							});
+						}, 300); // 待ち時間は短めでOK
+					}
+				});
 		// ② ローディング表示（診断ボタン用）
 		function showLoading() {
 			document.getElementById('btn-text').textContent = 'AIが解析中...';

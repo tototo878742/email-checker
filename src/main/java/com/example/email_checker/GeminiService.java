@@ -22,13 +22,12 @@ public class GeminiService {
 
 	public DiagnosisResponse analyze(String emailText) {
 		// モデルは最新のLite版
-//		String url
-//				= "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key="
-//						+ apiKey;
-//		Gemini 2.5 Flash Lite
-//		Gemini 2.5 Flash
-//		Gemini 3 Flash の３つが現状使える
-		String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+		String url= "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key="+ apiKey;
+//		String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+//		String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=" + apiKey;
+		// Gemini 2.5 Flash Lite
+		// Gemini 2.5 Flash
+		// Gemini 3 Flash の３つが現状使える
 
 		// プロンプト：JSON形式で返すように厳格に指定します
 		String prompt = """
