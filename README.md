@@ -3,8 +3,7 @@
 新入社員やIT初心者をターゲットにした、フィッシング詐欺メールの危険度判定ツールです。
 Google Gemini (AI) を活用し、メール本文のリスクスコア判定、危険なキーワードのハイライト、教育的な解説をリアルタイムで提供します。
 
-**Demo URL:** [https://mysterious-jocelyne-xxxx.koyeb.app/](https://mysterious-jocelyne-tototo878742-cf0c598e.koyeb.app/)
-
+**Demo URL:** https://email-checker.koyeb.app/
 ## 🚀 開発の背景
 「知識がない人でも直感的にメールの危険性を判断できるツールが必要だ」と考え開発しました。
 単に「危険」と判定するだけでなく、「なぜ危険なのか」をAIに解説させることで、ユーザーのリテラシー向上も狙っています。
