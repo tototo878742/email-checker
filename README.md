@@ -4,7 +4,6 @@
 Google Gemini (AI) を活用し、メール本文のリスクスコア判定、危険なキーワードのハイライト、教育的な解説をリアルタイムで提供します。
 
 **Demo URL:** [https://mysterious-jocelyne-xxxx.koyeb.app/](https://mysterious-jocelyne-tototo878742-cf0c598e.koyeb.app/)
-(※ここにあなたのKoyebのURLを貼ってください)
 
 ## 🚀 開発の背景
 「知識がない人でも直感的にメールの危険性を判断できるツールが必要だ」と考え開発しました。
