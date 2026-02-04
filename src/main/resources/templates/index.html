@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Email Guardian AI | あやしいメール診断</title>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+	<style>
+		/* カスタムテーマ設定 */
+		:root {
+			--primary-color: #2c3e50;
+			/* 信頼感のあるネイビー */
+			--accent-color: #3498db;
+			/* ITっぽい青 */
+			--bg-color: #f8f9fa;
+			/* 清潔感のあるグレー背景 */
+			--card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+			/* ふんわりした影 */
+		}
+
+		body {
+			font-family: 'Noto Sans JP', sans-serif;
+			background-color: var(--bg-color);
+			color: #444;
+			padding-bottom: 50px;
+		}
+
+		/* ヘッダー周り */
+		.app-header {
+			background: white;
+			padding: 2rem 0;
+			margin-bottom: 3rem;
+			border-bottom: 1px solid #eee;
+		}
+
+		.brand-title {
+			font-weight: 700;
+			color: var(--primary-color);
+			letter-spacing: 0.05em;
+		}
+
+		/* カード（入力欄や結果）のデザイン */
+		.custom-card {
+			background: white;
+			border: none;
+			border-radius: 16px;
+			box-shadow: var(--card-shadow);
+			overflow: hidden;
+			transition: transform 0.2s;
+			/* ★追加：スクロールした時に、ブラウザの天井からこれくらい空ける */
+			scroll-margin-top: 100px;
+		}
+
+		.form-control {
+			background-color: #f8f9fa;
+			border: 2px solid #eee;
+			border-radius: 12px;
+			padding: 15px;
+			font-size: 1rem;
+			transition: all 0.3s;
+		}
+
+		.form-control:focus {
+			background-color: white;
+			border-color: var(--accent-color);
+			box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+		}
+
+		.btn-analyze {
+			background: linear-gradient(135deg, var(--primary-color), #34495e);
+			color: white;
+			border: none;
+			padding: 12px 30px;
+			border-radius: 50px;
+			/* 丸っこいボタン */
+			font-weight: 700;
+			letter-spacing: 0.05em;
+			box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+			transition: all 0.3s;
+		}
+
+		.btn-analyze:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 6px 20px rgba(44, 62, 80, 0.4);
+		}
+
+		.btn-analyze:disabled {
+			background: #ccc;
+			transform: none;
+		}
+
+		/* 赤ペン先生ハイライト（修正版） */
+		.highlight {
+			background: linear-gradient(transparent 60%, rgba(220, 53, 69, 0.2) 60%);
+			/* マーカー風 */
+			border-bottom: 2px solid #dc3545;
+			font-weight: 700;
+			color: #c0392b;
+			padding: 0 2px;
+			cursor: help;
+			border-radius: 4px;
+			position: relative;
+			/* ポップアップの基準点にするために必須 */
+			display: inline-block;
+			/* 崩れ防止 */
+		}
+
+		/* マウスを乗せた時に「パッ」と出る吹き出し */
+		.highlight:hover::after {
+			content: "⚠️ ここが怪しい！";
+			/* 表示する文字 */
+			position: absolute;
+			bottom: 100%;
+			/* 文字の上に表示 */
+			left: 50%;
+			transform: translateX(-50%);
+			/* 中央揃え */
+
+			background-color: #333;
+			/* 黒背景 */
+			color: white;
+			/* 白文字 */
+			padding: 5px 10px;
+			border-radius: 6px;
+			font-size: 0.85rem;
+			white-space: nowrap;
+			/* 改行させない */
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+			z-index: 1000;
+			/* 他の要素より手前に */
+			pointer-events: none;
+			/* 邪魔にならないように */
+			margin-bottom: 5px;
+			/* 少し浮かせる */
+		}
+
+		/* 吹き出しの「▼」のしっぽ（お好みで） */
+		.highlight:hover::before {
+			content: "";
+			position: absolute;
+			bottom: 100%;
+			left: 50%;
+			margin-left: -5px;
+			margin-bottom: -5px;
+			/* 位置調整 */
+			border-width: 5px;
+			border-style: solid;
+			border-color: #333 transparent transparent transparent;
+			z-index: 1000;
+		}
+
+		/* メール本文エリア */
+		.email-preview {
+			background-color: #fff;
+			background-image: radial-gradient(#f0f0f0 1px, transparent 1px);
+			background-size: 20px 20px;
+			/* ノートのようなドット柄 */
+			border: 1px solid #eee;
+			border-radius: 12px;
+			padding: 2rem;
+			color: #555;
+			line-height: 1.8;
+			font-size: 0.95rem;
+		}
+	</style>
+</head>
+
+<body>
+
+	<header class="app-header">
+		<div class="container text-center">
+			<h1 class="brand-title"><i class="bi bi-shield-check text-primary"></i> Email Guardian AI</h1>
+			<p class="text-muted mt-2">新入社員のための、AIセキュリティ・アドバイザー</p>
+		</div>
+	</header>
+
+	<div class="container" style="max-width: 800px;">
+
+		<div class="custom-card p-4 mb-5">
+			<h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-envelope-paper"></i> 診断したいメール</h5>
+			<form action="/analyze" method="post" onsubmit="showLoading()">
+				<div class="mb-4">
+					<textarea class="form-control" name="emailText" rows="8"
+						placeholder="例：『至急、パスワードを変更してください』といったメール本文をここに貼り付けます..." required></textarea>
+				</div>
+				<div class="text-center">
+					<button type="submit" class="btn btn-analyze w-100">
+						<span id="btn-text"><i class="bi bi-search"></i> リスクを診断する</span>
+						<span id="loading-spinner" class="spinner-border spinner-border-sm" role="status"
+							aria-hidden="true" style="display:none;"></span>
+					</button>
+				</div>
+			</form>
+		</div>
+
+		<div th:if="${score != null}" class="custom-card animate__animated animate__fadeInUp">
+			<div class="p-4 border-bottom bg-light">
+				<div class="row align-items-center">
+					<div class="col-md-6">
+						<h4 class="mb-0 fw-bold">診断レポート</h4>
+						<small class="text-muted"
+							th:text="${#dates.format(new java.util.Date(), 'yyyy/MM/dd HH:mm')} + ' 実施'"></small>
+					</div>
+					<div class="col-md-6 text-md-end mt-3 mt-md-0">
+						<span class="badge rounded-pill px-3 py-2 fs-6"
+							th:classappend="${score > 70} ? 'bg-danger' : (${score > 40} ? 'bg-warning text-dark' : 'bg-success')">
+							<i class="bi bi-exclamation-triangle-fill me-1" th:if="${score > 40}"></i>
+							<i class="bi bi-check-circle-fill me-1" th:if="${score <= 40}"></i>
+							危険度: <span th:text="${score}"></span>%
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="card-body p-4">
+				<div class="progress mb-4" style="height: 10px; border-radius: 5px; background-color: #e9ecef;">
+					<div class="progress-bar" role="progressbar" th:style="'width: ' + ${score} + '%'"
+						th:classappend="${score > 70} ? 'bg-danger' : (${score > 40} ? 'bg-warning' : 'bg-success')">
+					</div>
+				</div>
+
+				<div class="d-flex align-items-start mb-4 p-3 rounded-3"
+					style="background-color: #f1f8ff; border-left: 5px solid var(--accent-color);">
+					<div class="me-3 fs-3 text-primary"><i class="bi bi-robot"></i></div>
+					<div>
+						<h6 class="fw-bold text-primary mb-1">AI先生の解説</h6>
+						<p class="mb-0 text-dark" th:text="${reason}"></p>
+					</div>
+				</div>
+
+				<hr class="my-4" style="border-top: 2px dashed #eee;">
+
+				<h5 class="fw-bold mb-3"><i class="bi bi-pen"></i> 危険ワードのチェック</h5>
+				<div id="email-content" class="email-preview" th:text="${original}"></div>
+			</div>
+		</div>
+		<div class="mt-5 mb-5">
+			<h5 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history"></i> 最近診断されたメール</h5>
+			<div class="list-group shadow-sm">
+				<div th:each="log : ${historyList}" class="list-group-item list-group-item-action p-3">
+					<div class="d-flex w-100 justify-content-between">
+						<h6 class="mb-1 fw-bold text-truncate" style="max-width: 70%;" th:text="${log.shortText}"></h6>
+						<small th:text="${#temporals.format(log.createdAt, 'MM/dd HH:mm')}"></small>
+					</div>
+					<p class="mb-1 small text-muted" th:text="${log.reason}"></p>
+					<span class="badge rounded-pill"
+						th:classappend="${log.score > 70} ? 'bg-danger' : (${log.score > 40} ? 'bg-warning text-dark' : 'bg-success')">
+						危険度: <span th:text="${log.score}"></span>%
+					</span>
+				</div>
+				<div th:if="${historyList.isEmpty()}" class="list-group-item text-center text-muted p-4">
+					まだ履歴はありません。最初の診断者になりましょう！
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div th:if="${score != null}" id="result-section" class="custom-card animate__animated animate__fadeInUp">
+	</div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+
+		// ① ページ読み込み時の自動スクロール処理
+		document.addEventListener("DOMContentLoaded", function () {
+			const resultSection = document.getElementById('result-section');
+			if (resultSection) {
+				setTimeout(() => {
+					resultSection.scrollIntoView({
+						behavior: 'smooth',
+						block: 'start'  // ★ここを 'center' から 'start' に変更
+					});
+				}, 500);
+			}
+		});
+
+		// ② ローディング表示（診断ボタン用）
+		function showLoading() {
+			document.getElementById('btn-text').textContent = 'AIが解析中...';
+			document.getElementById('loading-spinner').style.display = 'inline-block';
+
+			// ボタンの見た目を「押せない状態」にする
+			const btn = document.querySelector('.btn-analyze');
+			btn.style.opacity = '0.7';
+			btn.style.pointerEvents = 'none';
+		}
+
+		// ③ 赤ペン先生（ハイライト）の実行
+		const dangerousWords = /*[[${dangerousWords}]]*/[];
+		const contentDiv = document.getElementById('email-content');
+
+		if (contentDiv && dangerousWords && dangerousWords.length > 0) {
+			let htmlContent = contentDiv.innerText;
+
+			// 重複削除（同じ単語が何度もリストにあるとバグるため）
+			const uniqueWords = [...new Set(dangerousWords)];
+
+			uniqueWords.forEach(word => {
+				// 1文字の単語は誤検知が多いので無視
+				if (word && word.length > 1) {
+					// 正規表現のエスケープ処理
+					const safeWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					const regex = new RegExp(safeWord, 'gi');
+
+					// ★修正ポイント： title属性を使わず、CSSの ::after で表示させるため属性は不要
+					htmlContent = htmlContent.replace(regex, `<span class="highlight">${word}</span>`);
+				}
+			});
+			contentDiv.innerHTML = htmlContent;
+		}
+		/*]]>*/
+	</script>
+</body>
+
+</html>
