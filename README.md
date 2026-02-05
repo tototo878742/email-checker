@@ -11,7 +11,7 @@ Google Gemini (AI) を活用し、メール本文のリスクスコア判定、�
 ## 🛠️ 技術スタック
 ### Backend
 - **Java 17**
-- **Spring Boot 4.0.3 (Web, JPA)
+- **Spring Boot 4.0.2 (Web, JPA)
 - **Google Gemini API** (Generative AI)
 
 ### Frontend
